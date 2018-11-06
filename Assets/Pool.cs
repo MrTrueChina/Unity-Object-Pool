@@ -62,7 +62,7 @@ public class Pool : MonoBehaviour
             instance.SetActive(true);
         }
 
-        return Instantiate(prefab, position, rotation);
+        return GetNewObject(prefab, position, rotation);
     }
     public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
     {
@@ -89,5 +89,12 @@ public class Pool : MonoBehaviour
         }
 
         return null;
+    }
+
+    static GameObject GetNewObject(GameObject prefab, Vector3 position, Quaternion rotation)
+    {
+        GameObject newObject = Instantiate(prefab, position, rotation);
+        newObject.name = prefab.name;
+        return newObject;
     }
 }
