@@ -30,7 +30,7 @@ public class SpownCube : MonoBehaviour
     void Spown()
     {
         Vector3 position = new Vector3(Random.Range(-5f, 5f), Random.Range(-5f, 5f), Random.Range(-5f, 5f));
-        GameObject instance = Pool.Get(_prefab, position, Quaternion.identity);
+        GameObject instance = MtC.Tool.ObjectPool.Pool.Get(_prefab, position, Quaternion.identity);
         instance.GetComponent<DelaySet>().setTime = Random.Range(_minSetDelay, _maxSetDelay);
     }
 }

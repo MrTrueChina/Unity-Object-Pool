@@ -13,7 +13,7 @@
 
     private void OnEnable()
     {
-        Pool.Set(gameObject, setTime);
+        MtC.Tool.ObjectPool.Pool.Set(gameObject, setTime);
     }
 
 
