@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace MtC.Tool.ObjectPool
+namespace MtC.Tools.ObjectPool
 {
     public class Pool : MonoBehaviour
     {

@@ -1,4 +1,6 @@
-﻿public class DelaySet : RequireResetComponent
+﻿using MtC.Tools.ObjectPool;
+
+public class DelaySet : RequireResetComponent
 {
     public float setTime;
     
@@ -13,7 +15,7 @@
 
     private void OnEnable()
     {
-        MtC.Tool.ObjectPool.Pool.Set(gameObject, setTime);
+        Pool.Set(gameObject, setTime);
     }
 
 

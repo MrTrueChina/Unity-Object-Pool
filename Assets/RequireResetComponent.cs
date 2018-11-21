@@ -9,7 +9,10 @@
 
 using UnityEngine;
 
-public class RequireResetComponent : MonoBehaviour
+namespace MtC.Tools.ObjectPool
 {
-    public virtual void Reset() { }
+    public class RequireResetComponent : MonoBehaviour
+    {
+        public virtual void Reset() { }
+    }
 }

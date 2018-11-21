@@ -1,4 +1,4 @@
-需要 using MtC.Tool.ObjectPool;
+需要 using MtC.Tools.ObjectPool;
 
 取出是 Get，存入是 Set
 
