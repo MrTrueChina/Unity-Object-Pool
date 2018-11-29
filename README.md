@@ -25,6 +25,9 @@ public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rot
 ### ResetOnSetToPool
 实现这个接口中的 ResetOnSetToPool() 方法，可以在存入池时由对象池调用该方法对组件进行重置。</br>
 </br>
+</br>
+</br>
+
 ### 文件夹内容：
 | 文件夹 | 内容 |
 | ------------- |:-------------| 
