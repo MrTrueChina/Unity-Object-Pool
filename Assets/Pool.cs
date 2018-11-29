@@ -43,18 +43,21 @@ namespace MtC.Tools.ObjectPool
         }
         static Transform _poolParent;
 
-        static Pool poolObject
+        static Pool poolComponent
         {
             get
             {
-                if (_poolObject != null)
-                    return _poolObject;
+                if (_poolComponent != null)
+                    return _poolComponent;
 
-                _poolObject = poolParent.gameObject.AddComponent<Pool>();
-                return _poolObject;
+                _poolComponent = poolParent.gameObject.AddComponent<Pool>();
+                return _poolComponent;
             }
         }
-        static Pool _poolObject;
+        static Pool _poolComponent;
+
+
+        static List<GameObject> _currentFrameSetObjects = new List<GameObject>();       //当前帧需要存入池的对象，为了模仿Destroy的销毁总在当前帧最后进行，把当前帧需要存入池的对象先暂存起来，到 LateUpdate 再存入
 
 
 
@@ -66,17 +69,36 @@ namespace MtC.Tools.ObjectPool
 
 
         //存入
-        public static void Set(GameObject setObject)
+        public static void Set(GameObject setObject, float delay = 0)
         {
-            setObject.SetActive(false);                                         //禁用物体，这一步最先进行，因为后续的重置物体会大规模影响到物体上的组件，但如果物体已经被禁用那么影响就好控制的多了
+            poolComponent.StartCoroutine(DelaySet(setObject, delay));
+        }
+        static IEnumerator DelaySet(GameObject setObject, float delay)
+        {
+            if (delay > 0)
+                yield return new WaitForSeconds(delay);
+            _currentFrameSetObjects.Add(setObject);
+        }
+
+        
+        private void LateUpdate()
+        {
+            foreach (GameObject setObject in _currentFrameSetObjects)   //在 LateUpdate 把当前帧需要存入池的物体全都存入池，如果其他脚本有在 LateUpdate 存入池的情况，可以设置脚本执行顺序到最后
+                DoSet(setObject);
+            _currentFrameSetObjects.Clear();        //全部存入后一定要记得清除List
+        }
+
+        static void DoSet(GameObject setObject)
+        {
+            setObject.SetActive(false);                                             //禁用物体，这一步最先进行，因为后续的重置物体会大规模影响到物体上的组件，但如果物体已经被禁用那么影响就好控制的多了
             ResetObject(setObject);
 
-            if (!_poolObject._pool.ContainsKey(setObject.name))                 //Dictionary.ContainsKey()：查找字典里有没有这个键值
-                poolObject._pool.Add(setObject.name, new List<GameObject>());   //Dictionary.Add()：向字典里增加一对键值和元素，字典不会自动增加键值和元素，只能手动进行
+            if (!poolComponent._pool.ContainsKey(setObject.name))                   //Dictionary.ContainsKey()：查找字典里有没有这个键值
+                poolComponent._pool.Add(setObject.name, new List<GameObject>());    //Dictionary.Add()：向字典里增加一对键值和元素，字典不会自动增加键值和元素，只能手动进行
 
-            poolObject._pool[setObject.name].Add(setObject);                    //字典获取元素的方法类似于数组，是方括号里写键值：[键值]
+            poolComponent._pool[setObject.name].Add(setObject);                     //字典获取元素的方法类似于数组，是方括号里写键值：[键值]
 
-            setObject.transform.parent = poolParent;                            //将存入池的物体移到对象池物体下作为子物体
+            setObject.transform.parent = poolParent;                                //将存入池的物体移到对象池物体下作为子物体
             //这一部很重要，如果不转移到对象池物体下的话有可能会因为原本的父物体销毁而导致对象池出现空位，进而导致取不出物体
             //同时对象池物体已经设置加载场景时不销毁，他的子物体同样不会在加载场景时销毁，对象池就可以跨场景使用
         }
@@ -85,16 +107,6 @@ namespace MtC.Tools.ObjectPool
             ResetOnSetToPool[] resetComponents = setObject.GetComponents<ResetOnSetToPool>();
             foreach (ResetOnSetToPool resetComponent in resetComponents)
                 resetComponent.ResetOnSetToPool();
-        }
-
-        public static void Set(GameObject setObject, float delay)
-        {
-            poolObject.StartCoroutine(DelaySet(setObject, delay));
-        }
-        static IEnumerator DelaySet(GameObject setObject, float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            Set(setObject);
         }
 
 
@@ -202,17 +214,17 @@ namespace MtC.Tools.ObjectPool
         
         static GameObject GetInactiveObjectFromPool(GameObject prefab)                //从池里获取未激活的物体，因为要处理后再激活
         {
-            if (poolObject._pool.ContainsKey(prefab.name))
+            if (poolComponent._pool.ContainsKey(prefab.name))
             {
-                List<GameObject> list = poolObject._pool[prefab.name];
+                List<GameObject> list = poolComponent._pool[prefab.name];
 
                 if (list != null && list.Count > 0)
                 {
-                    GameObject instance = list[0];
-                    list.RemoveAt(0);                   //从池里取出物体时要把池里的引用一起移除掉
+                    GameObject instance = list[list.Count - 1];     //从最后一个移除似乎比从第一个移除快，我觉得应该是跟元素的移动有关系
+                    list.RemoveAt(list.Count - 1);                  //从池里取出物体时要把池里的引用一起移除掉
 
-                    instance.transform.parent = null;   //首先把这个物体从对象池物体下移出来
-                    CancelDontDestroyOnLoad(instance);  //取消物体的加载场景不销毁效果
+                    instance.transform.parent = null;               //首先把这个物体从对象池物体下移出来
+                    CancelDontDestroyOnLoad(instance);              //取消物体的加载场景不销毁效果
 
                     return instance;
                 }

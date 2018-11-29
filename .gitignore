@@ -30,6 +30,7 @@ ExportedObj/
 *.meta
 Building/
 Packages/
+Github Desktop Ignored/
 
 # Unity3D Generated File On Crash Reports
 sysinfo.txt
