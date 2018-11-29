@@ -82,9 +82,9 @@ namespace MtC.Tools.ObjectPool
         }
         static void ResetObject(GameObject setObject)       //重置物体，因为找不到重置整个物体的方法，所以通过获取所有需要重置的组件并调用重置方法来达到类似效果
         {
-            RequireResetComponent[] resetComponents = setObject.GetComponents<RequireResetComponent>();
-            foreach (RequireResetComponent resetComponent in resetComponents)
-                resetComponent.Reset();
+            ResetOnSetToPool[] resetComponents = setObject.GetComponents<ResetOnSetToPool>();
+            foreach (ResetOnSetToPool resetComponent in resetComponents)
+                resetComponent.ResetOnSetToPool();
         }
 
         public static void Set(GameObject setObject, float delay)
@@ -241,5 +241,19 @@ namespace MtC.Tools.ObjectPool
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;      //被销毁时取消对场景加载的订阅，这一步意义不大，一般来说销毁对象池的时候就是游戏关闭的时候
         }
+    }
+
+
+    /*
+     *  需要在存入池时重置的组件需要实现这个接口
+     *  
+     *  
+     *  我找了好长时间也找不到自带的在运行时重置物体或者组件的方法，然后我找了别人写的对象池发现也不能重置物体或组件，我猜测重置物体或组件的功能应该不会比实例化和挂载组件节省多少资源，所以官方才没有提供这个方法
+     *  
+     *  于是只能曲线救国了，写一个接口，写上重置方法之后让对象池在存入的时候调用
+     */
+    public interface ResetOnSetToPool
+    {
+        void ResetOnSetToPool();
     }
 }
