@@ -11,13 +11,9 @@ public class SpownCube : MonoBehaviour
     [SerializeField]
     float _maxSpownInterval;
 
-    [SerializeField]
-    float _minSetDelay;
-    [SerializeField]
-    float _maxSetDelay;
-
 
     float nextSpown;
+
 
     private void Update()
     {
@@ -31,7 +27,6 @@ public class SpownCube : MonoBehaviour
     void Spown()
     {
         Vector3 position = new Vector3(Random.Range(-5f, 5f), Random.Range(-5f, 5f), Random.Range(-5f, 5f));
-        GameObject instance = Pool.Get(_prefab, position, Quaternion.identity);
-        instance.GetComponent<DelaySet>().setTime = Random.Range(_minSetDelay, _maxSetDelay);
+        Pool.Get(_prefab, position, Quaternion.identity);
     }
 }

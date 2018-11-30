@@ -64,6 +64,7 @@ namespace MtC.Tools.ObjectPool
         private void Awake()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;      //订阅场景加载事件，OnLevelWasLoaded过时了，会在最近版本弃用，新方法暂时是订阅事件
+            Camera.onPreCull += OnPerCull;                  //订阅摄像机开始剔除事件，剔除是渲染的第一步，这个事件是渲染前最后一个事件
         }
 
 
@@ -80,33 +81,45 @@ namespace MtC.Tools.ObjectPool
             _currentFrameSetObjects.Add(setObject);
         }
 
-        
-        private void LateUpdate()
+        void OnPerCull(Camera cam)
+        {
+            if (_currentFrameSetObjects.Count > 0)
+                DoSet();
+        }
+        void DoSet()
         {
             foreach (GameObject setObject in _currentFrameSetObjects)   //在 LateUpdate 把当前帧需要存入池的物体全都存入池，如果其他脚本有在 LateUpdate 存入池的情况，可以设置脚本执行顺序到最后
-                DoSet(setObject);
+                SetAnObject(setObject);
             _currentFrameSetObjects.Clear();        //全部存入后一定要记得清除List
         }
 
+        static void SetAnObject(GameObject setObject)
+        {
+            if (setObject == null || IsInPool(setObject)) return;       //如果物体已经被销毁了（引用为空）或已经在池里了，不进行存入直接return
+
+            DoSet(setObject);
+        }
+        static bool IsInPool(GameObject go)
+        {
+            List<GameObject> list;
+            if (poolComponent._pool.TryGetValue(go.name, out list))
+                return list.Contains(go);
+            return false;
+        }
         static void DoSet(GameObject setObject)
         {
             setObject.SetActive(false);                                             //禁用物体，这一步最先进行，因为后续的重置物体会大规模影响到物体上的组件，但如果物体已经被禁用那么影响就好控制的多了
-            ResetObject(setObject);
+                                                                                    //禁用物体同时物体的所有协程也一起停止了，不用特别处理
 
             if (!poolComponent._pool.ContainsKey(setObject.name))                   //Dictionary.ContainsKey()：查找字典里有没有这个键值
+            {
                 poolComponent._pool.Add(setObject.name, new List<GameObject>());    //Dictionary.Add()：向字典里增加一对键值和元素，字典不会自动增加键值和元素，只能手动进行
+            }
 
             poolComponent._pool[setObject.name].Add(setObject);                     //字典获取元素的方法类似于数组，是方括号里写键值：[键值]
-
             setObject.transform.parent = poolParent;                                //将存入池的物体移到对象池物体下作为子物体
-            //这一部很重要，如果不转移到对象池物体下的话有可能会因为原本的父物体销毁而导致对象池出现空位，进而导致取不出物体
-            //同时对象池物体已经设置加载场景时不销毁，他的子物体同样不会在加载场景时销毁，对象池就可以跨场景使用
-        }
-        static void ResetObject(GameObject setObject)       //重置物体，因为找不到重置整个物体的方法，所以通过获取所有需要重置的组件并调用重置方法来达到类似效果
-        {
-            ResetOnSetToPool[] resetComponents = setObject.GetComponents<ResetOnSetToPool>();
-            foreach (ResetOnSetToPool resetComponent in resetComponents)
-                resetComponent.ResetOnSetToPool();
+                                                                                    //这一部很重要，如果不转移到对象池物体下的话有可能会因为原本的父物体销毁而导致对象池出现空位，进而导致取不出物体
+                                                                                    //同时对象池物体已经设置加载场景时不销毁，他的子物体同样不会在加载场景时销毁，对象池就可以跨场景使用
         }
 
 
@@ -214,23 +227,34 @@ namespace MtC.Tools.ObjectPool
         
         static GameObject GetInactiveObjectFromPool(GameObject prefab)                //从池里获取未激活的物体，因为要处理后再激活
         {
-            if (poolComponent._pool.ContainsKey(prefab.name))
+            List<GameObject> list;
+            if (poolComponent._pool.TryGetValue(prefab.name, out list) && list.Count > 0)
             {
-                List<GameObject> list = poolComponent._pool[prefab.name];
-
-                if (list != null && list.Count > 0)
+                GameObject instance = DoGetInactiveObjectFromPool(list);
+                if (instance != null)
                 {
-                    GameObject instance = list[list.Count - 1];     //从最后一个移除似乎比从第一个移除快，我觉得应该是跟元素的移动有关系
-                    list.RemoveAt(list.Count - 1);                  //从池里取出物体时要把池里的引用一起移除掉
-
                     instance.transform.parent = null;               //首先把这个物体从对象池物体下移出来
                     CancelDontDestroyOnLoad(instance);              //取消物体的加载场景不销毁效果
+
+                    ResetObject(instance);                          //重置这个物体
 
                     return instance;
                 }
             }
 
             return null;
+        }
+        static GameObject DoGetInactiveObjectFromPool(List<GameObject> list)
+        {
+            GameObject instance = null;
+
+            while (instance == null && list.Count > 0)      //循环到取到物体或列表耗尽。对象池的物体虽然不会随场景加载销毁但仍可能被以其他方式销毁，如果物体在池里销毁
+            {
+                instance = list[list.Count - 1];            //从最后一个移除似乎比从第一个移除快，我觉得应该是跟元素的移动有关系
+                list.RemoveAt(list.Count - 1);              //从池里取出物体时要把池里的引用一起移除掉
+            }
+
+            return instance;
         }
 
         static void CancelDontDestroyOnLoad(GameObject go)
@@ -239,9 +263,16 @@ namespace MtC.Tools.ObjectPool
             //把物体移动到当前激活场景就能取消 DontDestroyOnLoad 效果，具体原理见 https://github.com/MrTrueChina/Unity-Cancel-DontDestroyOnLoad
         }
 
+        static void ResetObject(GameObject setObject)       //重置物体，因为找不到重置整个物体的方法，所以通过获取所有需要重置的组件并调用重置方法来达到类似效果
+        {
+            ResetOnGetFromPool[] resetComponents = setObject.GetComponents<ResetOnGetFromPool>();
+            foreach (ResetOnGetFromPool resetComponent in resetComponents)
+                resetComponent.ResetOnGetFromPool();
+        }
 
 
-        //场景加载时停止所有协程，也就是取消所有延时存入池，因为场景加载时还没存入池的物体都被销毁了，不停止协程的话会出错
+
+        //场景加载时停止所有协程，也就是取消所有延时存入池，因为场景加载时还没存入池的物体都被销毁了，
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             StopAllCoroutines();
@@ -251,9 +282,11 @@ namespace MtC.Tools.ObjectPool
 
         private void OnDestroy()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;      //被销毁时取消对场景加载的订阅，这一步意义不大，一般来说销毁对象池的时候就是游戏关闭的时候
+            SceneManager.sceneLoaded -= OnSceneLoaded;      //被销毁时取消对场景加载的订阅
+            Camera.onPreCull -= OnPerCull;                  //取消对摄像机开始剔除事件的订阅
         }
     }
+
 
 
     /*
@@ -264,8 +297,8 @@ namespace MtC.Tools.ObjectPool
      *  
      *  于是只能曲线救国了，写一个接口，写上重置方法之后让对象池在存入的时候调用
      */
-    public interface ResetOnSetToPool
+    public interface ResetOnGetFromPool
     {
-        void ResetOnSetToPool();
+        void ResetOnGetFromPool();
     }
 }

@@ -404,9 +404,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _prefab: {fileID: 1005520379628812, guid: ba71cf731ec73784c80725f5c5dda82d, type: 2}
   _minSpownInterval: 0.1
-  _maxSpownInterval: 1
-  _minSetDelay: 0.2
-  _maxSetDelay: 2
+  _maxSpownInterval: 0.2
 --- !u!4 &690694394
 Transform:
   m_ObjectHideFlags: 0
