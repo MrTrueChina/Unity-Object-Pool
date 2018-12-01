@@ -3,14 +3,14 @@ Details：https://github.com/MrTrueChina/Unity-Object-Pool
 namespace： MtC.Tools.ObjectPool
 
 Methods：
-	Pool.Set
+	MPool.Set
 		public static void Set(GameObject setObject, float delay = 0)
 
 	According to the Set method written by the Destroy method, in order to simulate Destroy's function of destroying at the end of each frame, 
 	it is set to be stored before the culling by Camera.onPreCull. If other scripts are stored in the pool at this time, it is brave.
 
 
-	Pool.Get
+	MPool.Get
 		public static GameObject Get(GameObject prefab)
 		public static GameObject Get(GameObject prefab, Transform parent)
 		public static GameObject Get(GameObject prefab, Transform parent, bool instantiateInWorldSpace)
