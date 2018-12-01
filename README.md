@@ -1,4 +1,4 @@
-# <a href="#Chinese">中文版</a> / <a href="#Chinese">English</a>
+# <a href="#Chinese">中文版</a> / <a href="#English">English</a>
 <div id="Chinese"></div>
 
 # Unity对象池
@@ -63,7 +63,7 @@ Unity自带的实例化和销毁方法太过昂贵，同时Unity又没有提供�
 </br>
 
 
-# <a href="#Chinese">English</a> / <a href="#Chinese">中文版</a>
+# <a href="#English">English</a> / <a href="#Chinese">中文版</a>
 <div id="English"></div>
 
 # Unity object pool
