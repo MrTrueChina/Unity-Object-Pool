@@ -16,17 +16,15 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace MtC.Tools.ObjectPool
 {
-    public class Pool : MonoBehaviour
+    public class MPool : MonoBehaviour
     {
-        Dictionary<string, List<GameObject>> _pool = new Dictionary<string, List<GameObject>>();    //准备一个字典对象，这个字典就是对象池里数据的容器
-        //字典（Dictionary）：通过键值查找元素的数据类型，创建格式是：Dictionary<Tkey, TValue> 前一个是键值类型，后一个是元素类型
-
-        static Transform poolParent
+        static Transform poolParent     //所有池内物体的父级
         {
             get
             {
@@ -34,7 +32,7 @@ namespace MtC.Tools.ObjectPool
                     return _poolParent;
 
                 GameObject poolObject = new GameObject("Object Pool");
-                DontDestroyOnLoad(poolObject);                          //设置对象池物体不会随场景加载被销毁，这步很重要，能不能跨场景都在这了
+                DontDestroyOnLoad(poolObject);                              //设置对象池物体不会随场景加载被销毁，这步很重要，能不能跨场景都在这了
                 _poolParent = poolObject.transform;
                 return _poolParent;
 
@@ -43,21 +41,25 @@ namespace MtC.Tools.ObjectPool
         }
         static Transform _poolParent;
 
-        static Pool poolComponent
+        static MPool poolComponent       //挂载的对象池组件
         {
             get
             {
                 if (_poolComponent != null)
                     return _poolComponent;
 
-                _poolComponent = poolParent.gameObject.AddComponent<Pool>();
+                _poolComponent = poolParent.gameObject.AddComponent<MPool>();
                 return _poolComponent;
             }
         }
-        static Pool _poolComponent;
+        static MPool _poolComponent;
 
 
-        static List<GameObject> _currentFrameSetObjects = new List<GameObject>();       //当前帧需要存入池的对象，为了模仿Destroy的销毁总在当前帧最后进行，把当前帧需要存入池的对象先暂存起来，到 LateUpdate 再存入
+        Dictionary<GameObject, GameObject> _poolObjects = new Dictionary<GameObject, GameObject>();                     //总表，所有对象池创建的物体，不管在池里还是在场上
+        Dictionary<GameObject, List<GameObject>> _insidePoolObjects = new Dictionary<GameObject, List<GameObject>>();   //内表，对象池里的物体
+        //字典（Dictionary）：通过键值查找元素的数据类型，创建格式是：Dictionary<Tkey, TValue> 前一个是键值类型，后一个是元素类型
+
+        List<GameObject> _currentFrameSetObjects = new List<GameObject>();       //当前帧需要存入池的物体，为了模仿 Destroy 的销毁总在当前帧最后进行，把当前帧需要存入池的物体先暂存起来，到 SceneManager.sceneLoaded 再存入
 
 
 
@@ -78,48 +80,54 @@ namespace MtC.Tools.ObjectPool
         {
             if (delay > 0)
                 yield return new WaitForSeconds(delay);
-            _currentFrameSetObjects.Add(setObject);
+            poolComponent._currentFrameSetObjects.Add(setObject);
         }
 
         void OnPerCull(Camera cam)
         {
             if (_currentFrameSetObjects.Count > 0)
-                DoSet();
+                SetObjectsIntoPool();
         }
-        void DoSet()
+        void SetObjectsIntoPool()
         {
-            foreach (GameObject setObject in _currentFrameSetObjects)   //在 LateUpdate 把当前帧需要存入池的物体全都存入池，如果其他脚本有在 LateUpdate 存入池的情况，可以设置脚本执行顺序到最后
+            foreach (GameObject setObject in _currentFrameSetObjects)   //在 SceneManager.sceneLoaded 把当前帧需要存入池的物体全都存入池，如果其他脚本有在 SceneManager.sceneLoaded 存入池的情况，我敬他是条汉子。
                 SetAnObject(setObject);
             _currentFrameSetObjects.Clear();        //全部存入后一定要记得清除List
         }
-
-        static void SetAnObject(GameObject setObject)
+        void SetAnObject(GameObject setObject)
         {
-            if (setObject == null || IsInPool(setObject)) return;       //如果物体已经被销毁了（引用为空）或已经在池里了，不进行存入直接return
+            if (setObject == null) return;
 
-            DoSet(setObject);
+            GameObject prefab = null;
+            if (_poolObjects.TryGetValue(setObject, out prefab))    //通过总表获取预制，获取得到说明是池物体
+            {
+                if (InPool(setObject, prefab)) return;              //在内表里则不需要任何操作
+
+                DoSet(setObject, prefab);
+            }
+            else
+            {
+                Destroy(setObject);                                 //没取到预制说明不是池物体，无法存入池，直接销毁
+            }
         }
-        static bool IsInPool(GameObject go)
+        bool InPool(GameObject go, GameObject prefab)
         {
             List<GameObject> list;
-            if (poolComponent._pool.TryGetValue(go.name, out list))
+            if (_insidePoolObjects.TryGetValue(prefab, out list))
                 return list.Contains(go);
             return false;
         }
-        static void DoSet(GameObject setObject)
+        void DoSet(GameObject setObject, GameObject prefab)
         {
-            setObject.SetActive(false);                                             //禁用物体，这一步最先进行，因为后续的重置物体会大规模影响到物体上的组件，但如果物体已经被禁用那么影响就好控制的多了
-                                                                                    //禁用物体同时物体的所有协程也一起停止了，不用特别处理
+            setObject.SetActive(false);                                     //禁用物体同时物体的所有协程也一起停止了，不用特别处理
 
-            if (!poolComponent._pool.ContainsKey(setObject.name))                   //Dictionary.ContainsKey()：查找字典里有没有这个键值
-            {
-                poolComponent._pool.Add(setObject.name, new List<GameObject>());    //Dictionary.Add()：向字典里增加一对键值和元素，字典不会自动增加键值和元素，只能手动进行
-            }
+            if (!_insidePoolObjects.ContainsKey(prefab))                    //Dictionary.ContainsKey()：查找字典里有没有这个键值
+                _insidePoolObjects.Add(prefab, new List<GameObject>());     //Dictionary.Add()：向字典里增加一对键值和元素，字典不会自动增加键值和元素，只能手动进行
 
-            poolComponent._pool[setObject.name].Add(setObject);                     //字典获取元素的方法类似于数组，是方括号里写键值：[键值]
-            setObject.transform.parent = poolParent;                                //将存入池的物体移到对象池物体下作为子物体
-                                                                                    //这一部很重要，如果不转移到对象池物体下的话有可能会因为原本的父物体销毁而导致对象池出现空位，进而导致取不出物体
-                                                                                    //同时对象池物体已经设置加载场景时不销毁，他的子物体同样不会在加载场景时销毁，对象池就可以跨场景使用
+            _insidePoolObjects[prefab].Add(setObject);                      //字典获取元素的方法类似于数组，是方括号里写键值：[键值]
+            setObject.transform.parent = poolParent;                        //将存入池的物体移到对象池物体下作为子物体
+                                                                            //这一步很重要，如果不转移到对象池物体下的话有可能会因为原本的父物体销毁而导致对象池出现空位造成资源浪费
+                                                                            //同时对象池物体已经设置加载场景时不销毁，他的子物体同样不会在加载场景时销毁，对象池就可以跨场景使用
         }
 
 
@@ -140,7 +148,7 @@ namespace MtC.Tools.ObjectPool
             else
             {
                 instance = Instantiate(prefab);
-                instance.name = prefab.name;
+                poolComponent._poolObjects.Add(instance, prefab);       //加入到总表，只要物体还存在就不会被移出总表，所以只要在实例化时加入一次
                 return instance;
             }
         }
@@ -160,7 +168,7 @@ namespace MtC.Tools.ObjectPool
             else
             {
                 instance = Instantiate(prefab, parent);
-                instance.name = prefab.name;
+                poolComponent._poolObjects.Add(instance, prefab);
                 return instance;
             }
         }
@@ -180,7 +188,7 @@ namespace MtC.Tools.ObjectPool
             else
             {
                 instance = Instantiate(prefab, parent, instantiateInWorldSpace);
-                instance.name = prefab.name;
+                poolComponent._poolObjects.Add(instance, prefab);
                 return instance;
             }            
         }
@@ -199,7 +207,7 @@ namespace MtC.Tools.ObjectPool
             else
             {
                 instance = Instantiate(prefab, position, rotation);
-                instance.name = prefab.name;
+                poolComponent._poolObjects.Add(instance, prefab);
                 return instance;
             }
         }
@@ -219,18 +227,18 @@ namespace MtC.Tools.ObjectPool
             else
             {
                 instance = Instantiate(prefab, position, rotation, parent);
-                instance.name = prefab.name;
+                poolComponent._poolObjects.Add(instance, prefab);
                 return instance;
             }
         }
 
         
-        static GameObject GetInactiveObjectFromPool(GameObject prefab)                //从池里获取未激活的物体，因为要处理后再激活
+        static GameObject GetInactiveObjectFromPool(GameObject prefab)      //从池里获取未激活的物体，因为要处理后再激活
         {
             List<GameObject> list;
-            if (poolComponent._pool.TryGetValue(prefab.name, out list) && list.Count > 0)
+            if (poolComponent._insidePoolObjects.TryGetValue(prefab, out list) && list.Count > 0)
             {
-                GameObject instance = DoGetInactiveObjectFromPool(list);
+                GameObject instance = GetAndRemoveInactiveObjectFromAList(list);
                 if (instance != null)
                 {
                     instance.transform.parent = null;               //首先把这个物体从对象池物体下移出来
@@ -244,11 +252,11 @@ namespace MtC.Tools.ObjectPool
 
             return null;
         }
-        static GameObject DoGetInactiveObjectFromPool(List<GameObject> list)
+        static GameObject GetAndRemoveInactiveObjectFromAList(List<GameObject> list)
         {
             GameObject instance = null;
 
-            while (instance == null && list.Count > 0)      //循环到取到物体或列表耗尽。对象池的物体虽然不会随场景加载销毁但仍可能被以其他方式销毁，如果物体在池里销毁
+            while (instance == null && list.Count > 0)      //循环到取到物体或列表耗尽。对象池的物体虽然不会随场景加载销毁但仍可能被以其他方式销毁，如果物体在池里销毁将会造成空位，需要进行处理
             {
                 instance = list[list.Count - 1];            //从最后一个移除似乎比从第一个移除快，我觉得应该是跟元素的移动有关系
                 list.RemoveAt(list.Count - 1);              //从池里取出物体时要把池里的引用一起移除掉
@@ -271,11 +279,16 @@ namespace MtC.Tools.ObjectPool
         }
 
 
-
-        //场景加载时停止所有协程，也就是取消所有延时存入池，因为场景加载时还没存入池的物体都被销毁了，
+        
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            StopAllCoroutines();
+            StopAllCoroutines();                            //没有在加载场景前发出的事件，无法回收在场上的物体，中断所有协程，防止空存入
+            ClearDestroyedObjectInPoolObjects();
+        }
+
+        void ClearDestroyedObjectInPoolObjects()
+        {
+            _poolObjects = (from kv in _poolObjects where kv.Key != null select kv).ToDictionary(kv => kv.Key, kv => kv.Value);     //用Linq清除总表里的键值为空的元素
         }
 
 

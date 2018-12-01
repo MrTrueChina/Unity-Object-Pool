@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using MtC.Tools.ObjectPool;
 
-public class SpownCube : MonoBehaviour
+public class MPoolSpownCube : MonoBehaviour
 {
     [SerializeField]
     GameObject _prefab;
@@ -27,6 +27,6 @@ public class SpownCube : MonoBehaviour
     void Spown()
     {
         Vector3 position = new Vector3(Random.Range(-5f, 5f), Random.Range(-5f, 5f), Random.Range(-5f, 5f));
-        Pool.Get(_prefab, position, Quaternion.identity);
+        MPool.Get(_prefab, position, Quaternion.identity);
     }
 }
