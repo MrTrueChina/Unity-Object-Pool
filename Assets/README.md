@@ -7,17 +7,19 @@ https://github.com/MrTrueChina/Unity-Object-Pool
 
 ## 方法：
 ### Pool.Set
-    public static void Set(GameObject setObject, float delay = 0)
-
+```C#
+public static void Set(GameObject setObject, float delay = 0);
+```
 按照 Destroy 方法写的 Set 方法，为了模仿 Destroy 的在每一帧最后销毁的功能设置为通过 Camera.onPreCull 在剔除前进行存入，如果有其他脚本在这个时候存入池，我敬你是条汉子。</br>
 </br>
 ### Pool.Get
-    public static GameObject Get(GameObject prefab)
-    public static GameObject Get(GameObject prefab, Transform parent)
-    public static GameObject Get(GameObject prefab, Transform parent, bool instantiateInWorldSpace)
-    public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation)
-    public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
-
+```C#
+public static GameObject Get(GameObject prefab);
+public static GameObject Get(GameObject prefab, Transform parent);
+public static GameObject Get(GameObject prefab, Transform parent, bool instantiateInWorldSpace);
+public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation);
+public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent);
+```
 按照 Instantiate 方法写的 Get 方法，使用方式和 Instantiate 相同。</br>
 </br>
 
@@ -56,17 +58,19 @@ https://github.com/MrTrueChina/Unity-Object-Pool
 
 ## Methods：
 ### Pool.Set
-    public static void Set(GameObject setObject, float delay = 0)
-
+```C#
+public static void Set(GameObject setObject, float delay = 0);
+```
 According to the Set method written by the Destroy method, in order to simulate Destroy's function of destroying at the end of each frame, it is set to be stored before the culling by Camera.onPreCull. If other scripts are stored in the pool at this time, it is brave.</br>
 </br>
 ### Pool.Get
-    public static GameObject Get(GameObject prefab)
-    public static GameObject Get(GameObject prefab, Transform parent)
-    public static GameObject Get(GameObject prefab, Transform parent, bool instantiateInWorldSpace)
-    public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation)
-    public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
-
+```C#
+public static GameObject Get(GameObject prefab);
+public static GameObject Get(GameObject prefab, Transform parent);
+public static GameObject Get(GameObject prefab, Transform parent, bool instantiateInWorldSpace);
+public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation);
+public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent);
+```
 According to the Get method written by the Instantiate method, it is used in the same way as Instantiate.</br>
 </br>
 
