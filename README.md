@@ -9,13 +9,13 @@ Unity自带的实例化和销毁方法太过昂贵，同时Unity又没有提供�
 # namespace： MtC.Tools.ObjectPool
 
 ## 方法：
-### Pool.Set
+### MPool.Set
 ```C#
 public static void Set(GameObject setObject, float delay = 0);
 ```
 按照 Destroy 方法写的 Set 方法，为了模仿 Destroy 的在每一帧最后销毁的功能设置为通过 Camera.onPreCull 在剔除前进行存入，如果有其他脚本在这个时候存入池，我敬你是条汉子。</br>
 </br>
-### Pool.Get
+### MPool.Get
 ```C#
 public static GameObject Get(GameObject prefab);
 public static GameObject Get(GameObject prefab, Transform parent);
@@ -38,7 +38,7 @@ public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rot
 ## 文件夹内容：
 | 文件夹 | 内容 |
 | ------------- |:-------------| 
-| Assets/MPool/Pool.cs | 对象池脚本 |
+| Assets/MPool/MPool.cs | 对象池脚本 |
 | Assets/MPool/Example | 演示场景、预制和脚本 |
 | BuildingPackages | 打好的资源包 |
 
@@ -76,13 +76,13 @@ Unity's Instantiate and Destroy methods are too expensive, and Unity does not pr
 # namespace： MtC.Tools.ObjectPool
 
 ## Methods：
-### Pool.Set
+### MPool.Set
 ```C#
 public static void Set(GameObject setObject, float delay = 0);
 ```
 According to the Set method written by the Destroy method, in order to simulate Destroy's function of destroying at the end of each frame, it is set to be stored before the culling by Camera.onPreCull. If other scripts are stored in the pool at this time, it is brave.</br>
 </br>
-### Pool.Get
+### MPool.Get
 ```C#
 public static GameObject Get(GameObject prefab);
 public static GameObject Get(GameObject prefab, Transform parent);
@@ -105,6 +105,6 @@ Implement the ResetOnGetFromPool() method in this interface. When the object is 
 ## Contents of folder：
 | Folder | Contents |
 | ------------- |:-------------| 
-| Assets/MPool/Pool.cs | Object pool script file |
+| Assets/MPool/MPool.cs | Object pool script file |
 | Assets/MPool/Example | Example scene,prefab and scripts |
 | BuildingPackages | Packaged resource |
