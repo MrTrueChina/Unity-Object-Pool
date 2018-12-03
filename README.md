@@ -69,7 +69,7 @@ public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rot
 <div id="English"></div>
 
 # Unity object pool
-Unity's Instantiate and Destroy methods are too expensive, and Unity does not provide a pool of objects, so I have to write the object pool.<br/>
+Unity's Instantiate and Destroy methods are too expensive, and Unity does not provide an object pool, so I have to write the object pool.<br/>
 <br/>
 <br/>
 
