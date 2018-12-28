@@ -123,7 +123,7 @@ namespace MtC.Tools.ObjectPool
                 _insidePoolObjects.Add(prefab, new Stack<GameObject>());    //Dictionary.Add()：向字典里增加一对键值和元素，字典不会自动增加键值和元素，只能手动进行
 
             _insidePoolObjects[prefab].Push(setObject);                     //字典获取元素的方法类似于数组，是方括号里写键值：[键值]
-            setObject.transform.parent = poolParent;                        //将存入池的物体移到对象池物体下作为子物体
+            setObject.transform.SetParent(poolParent, false);               //将存入池的物体移到对象池物体下作为子物体
                                                                             //这一步很重要，如果不转移到对象池物体下的话有可能会因为原本的父物体销毁而导致对象池出现空位造成资源浪费
                                                                             //同时对象池物体已经设置加载场景时不销毁，他的子物体同样不会在加载场景时销毁，对象池就可以跨场景使用
         }
@@ -239,7 +239,7 @@ namespace MtC.Tools.ObjectPool
                 GameObject instance = stack.Pop();
                 if (instance != null)
                 {
-                    instance.transform.parent = null;               //首先把这个物体从对象池物体下移出来
+                    instance.transform.SetParent(null, false);      //首先把这个物体从对象池物体下移出来
                     CancelDontDestroyOnLoad(instance);              //取消物体的加载场景不销毁效果
 
                     ResetObject(instance);                          //重置这个物体
