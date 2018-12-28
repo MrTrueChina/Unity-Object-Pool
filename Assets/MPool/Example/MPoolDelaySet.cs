@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using MtC.Tools.ObjectPool;
+using System;
 
-public class MPoolDelaySet : MonoBehaviour, ResetOnGetFromPool
+public class MPoolDelaySet : MonoBehaviour, IOnGetFromPool, IOnSetIntoPool
 {
     Transform _transform;
 
@@ -26,8 +27,13 @@ public class MPoolDelaySet : MonoBehaviour, ResetOnGetFromPool
 
 
 
-    public void ResetOnGetFromPool()            //实现 ResetOnSetToPool() 方法，从对象池里取出时对象池会调用
+    public void OnGetFromPool()            //实现 ResetOnSetToPool() 方法，从对象池里取出时对象池会调用
     {
         _transform.localScale = _originScale;   //把前面储存的原始缩放值存回 Transform
+    }
+
+    public void OnSetIntoPool()
+    {
+        _transform.localScale = _originScale;
     }
 }

@@ -119,6 +119,8 @@ namespace MtC.Tools.ObjectPool
         {
             setObject.SetActive(false);                                     //禁用物体同时物体的所有协程也一起停止了，不用特别处理
 
+            DoOnSet(setObject);
+
             if (!_insidePoolObjects.ContainsKey(prefab))                    //Dictionary.ContainsKey()：查找字典里有没有这个键值
                 _insidePoolObjects.Add(prefab, new Stack<GameObject>());    //Dictionary.Add()：向字典里增加一对键值和元素，字典不会自动增加键值和元素，只能手动进行
 
@@ -126,6 +128,13 @@ namespace MtC.Tools.ObjectPool
             setObject.transform.SetParent(poolParent, false);               //将存入池的物体移到对象池物体下作为子物体
                                                                             //这一步很重要，如果不转移到对象池物体下的话有可能会因为原本的父物体销毁而导致对象池出现空位造成资源浪费
                                                                             //同时对象池物体已经设置加载场景时不销毁，他的子物体同样不会在加载场景时销毁，对象池就可以跨场景使用
+        }
+
+        void DoOnSet(GameObject setObject)
+        {
+            IOnSetIntoPool[] resetComponents = setObject.GetComponents<IOnSetIntoPool>();
+            foreach (IOnSetIntoPool resetComponent in resetComponents)
+                resetComponent.OnSetIntoPool();
         }
 
 
@@ -242,7 +251,7 @@ namespace MtC.Tools.ObjectPool
                     instance.transform.SetParent(null, false);      //首先把这个物体从对象池物体下移出来
                     CancelDontDestroyOnLoad(instance);              //取消物体的加载场景不销毁效果
 
-                    ResetObject(instance);                          //重置这个物体
+                    DoOnGet(instance);                              //重置这个物体
 
                     return instance;
                 }
@@ -257,11 +266,11 @@ namespace MtC.Tools.ObjectPool
             //把物体移动到当前激活场景就能取消 DontDestroyOnLoad 效果，具体原理见 https://github.com/MrTrueChina/Unity-Cancel-DontDestroyOnLoad
         }
 
-        static void ResetObject(GameObject setObject)       //重置物体，因为找不到重置整个物体的方法，所以通过获取所有需要重置的组件并调用重置方法来达到类似效果
+        static void DoOnGet(GameObject setObject)           //在取出时重置物体，因为找不到重置整个物体的方法，所以通过获取所有需要重置的组件并调用重置方法来达到类似效果
         {
-            ResetOnGetFromPool[] resetComponents = setObject.GetComponents<ResetOnGetFromPool>();
-            foreach (ResetOnGetFromPool resetComponent in resetComponents)
-                resetComponent.ResetOnGetFromPool();
+            IOnGetFromPool[] resetComponents = setObject.GetComponents<IOnGetFromPool>();
+            foreach (IOnGetFromPool resetComponent in resetComponents)
+                resetComponent.OnGetFromPool();
         }
 
 
@@ -289,15 +298,23 @@ namespace MtC.Tools.ObjectPool
 
 
     /*
-     *  需要在存入池时重置的组件需要实现这个接口
+     *  需要在取出池时重置或者执行方法的组件可以实现这个接口
      *  
      *  
      *  我找了好长时间也找不到自带的在运行时重置物体或者组件的方法，然后我找了别人写的对象池发现也不能重置物体或组件，我猜测重置物体或组件的功能应该不会比实例化和挂载组件节省多少资源，所以官方才没有提供这个方法
      *  
-     *  于是只能曲线救国了，写一个接口，写上重置方法之后让对象池在存入的时候调用
+     *  于是只能曲线救国了，写一个接口，写上重置方法之后让对象池在取出的时候调用，之所以是取出是因为对象在池里时有可能被以其他方式访问并修改，在取出时重置明显更安全
      */
-    public interface ResetOnGetFromPool
+    public interface IOnGetFromPool
     {
-        void ResetOnGetFromPool();
+        void OnGetFromPool();
+    }
+
+    /*
+     *  这个是在存入时执行的，可以用来取消订阅和引用，防止内存泄漏
+     */
+    public interface IOnSetIntoPool
+    {
+        void OnSetIntoPool();
     }
 }
