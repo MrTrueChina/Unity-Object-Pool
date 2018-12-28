@@ -27,8 +27,11 @@ public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rot
 </br>
 
 ## 接口：
-### ResetOnGetFromPool
-实现这个接口中的 ResetOnGetFromPool() 方法，当从池里取出物体时对象池会自动调用该方法对组件进行重置。</br>
+### IOnGetFromPool
+实现这个接口中的 OnGetFromPool() 方法，当从池里取出物体时对象池会自动调用该方法，可用于对组件进行重置。</br>
+</br>
+### IOnSetIntoPool
+实现这个接口中的 OnSetIntoPool() 方法，当向对象池存入物体时对象池会自动调用该方法，可用于取消订阅和引用防止内存泄漏。</br>
 </br>
 
 ## 注意事项：
@@ -94,8 +97,11 @@ According to the Get method written by the Instantiate method, it is used in the
 </br>
 
 ## Interface ：
-### ResetOnGetFromPool
-Implement the ResetOnGetFromPool() method in this interface. When the object is taken out of the pool, the object pool will automatically call this method to reset the component.</br>
+### IOnGetFromPool
+Implement the OnGetFromPool() method in this interface. The object pool automatically calls this method when the object is removed from the pool. Can be used to reset components.</br>
+</br>
+### IOnSetIntoPool
+Implement the OnSetIntoPool() method in this interface. The object pool automatically calls this method when an object is stored in the object pool. Can be used to unsubscribe and reference to prevent memory leaks</br>
 </br>
 
 ## Attention：
