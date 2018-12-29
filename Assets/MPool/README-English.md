@@ -21,9 +21,16 @@ Methods：
 
 
 Interface ：
-	ResetOnGetFromPool
+	
+	IOnGetFromPool
+	
+	Implement the OnGetFromPool() method in this interface. The object pool automatically calls this method when the object is removed from the pool. Can be used to reset components.
 
-	Implement the ResetOnGetFromPool() method in this interface. When the object is taken out of the pool, the object pool will automatically call this method to reset the component.
+
+	IOnSetIntoPool
+	
+	Implement the OnSetIntoPool() method in this interface. The object pool automatically calls this method when an object is stored in the object pool. Can be used to unsubscribe and reference to prevent memory leaks
+
 
 Attention：
 This object pool can only be stored in objects created by its own Get() method.
