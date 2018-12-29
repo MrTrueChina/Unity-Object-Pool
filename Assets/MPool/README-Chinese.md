@@ -5,7 +5,7 @@ namespace： MtC.Tools.ObjectPool
 方法：
 	MPool.Set
 		public static void Set(GameObject setObject, float delay = 0)
-
+		
 	按照 Destroy 方法写的 Set 方法，为了模仿 Destroy 的在每一帧最后销毁的功能设置为通过 Camera.onPreCull 在剔除前进行存入，如果有其他脚本在这个时候存入池，我敬你是条汉子。
 
 
@@ -20,9 +20,14 @@ namespace： MtC.Tools.ObjectPool
 
 
 接口：
-	ResetOnGetFromPool
-
-	实现这个接口中的 ResetOnGetFromPool() 方法，当从池里取出物体时对象池会自动调用该方法对组件进行重置。
+	IOnGetFromPool
+	
+	实现这个接口中的 OnGetFromPool() 方法，当从池里取出物体时对象池会自动调用该方法，可用于对组件进行重置。
+	
+	
+	IOnSetIntoPool
+	
+	实现这个接口中的 OnSetIntoPool() 方法，当向对象池存入物体时对象池会自动调用该方法，可用于取消订阅和引用防止内存泄漏。
 
 注意事项：
 这个对象池只能存入通过自己的 Get() 方法创建的物体。
