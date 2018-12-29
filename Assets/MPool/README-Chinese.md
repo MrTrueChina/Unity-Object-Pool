@@ -29,5 +29,6 @@ namespace： MtC.Tools.ObjectPool
 	
 	实现这个接口中的 OnSetIntoPool() 方法，当向对象池存入物体时对象池会自动调用该方法，可用于取消订阅和引用防止内存泄漏。
 
+
 注意事项：
 这个对象池只能存入通过自己的 Get() 方法创建的物体。
