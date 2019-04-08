@@ -2,6 +2,9 @@
 <div id="Chinese"></div>
 
 # Unity对象池
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
+[![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
+
 Unity自带的实例化和销毁方法太过昂贵，同时Unity又没有提供对象池，那就只好自写对象池了<br/>
 <br/>
 <br/>
@@ -72,6 +75,9 @@ public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rot
 <div id="English"></div>
 
 # Unity object pool
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
+[![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
+
 Unity's Instantiate and Destroy methods are too expensive, and Unity does not provide an object pool, so I have to write the object pool.<br/>
 <br/>
 <br/>
